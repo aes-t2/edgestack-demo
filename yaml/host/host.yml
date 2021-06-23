@@ -1,0 +1,53 @@
+---
+apiVersion: getambassador.io/v2
+kind: Host                 # Host example TLS terminated at AES Host.
+metadata:
+  name: host-01.com        
+  namespace: ambassador
+spec:
+  hostname: "host-01.com"  
+  acmeProvider:
+    authority: https://acme-v02.api.letsencrypt.org/directory
+    email: me@example.com  
+  requestPolicy:
+    insecure:
+      action: Redirect
+      additionalPort: 8080
+---
+apiVersion: getambassador.io/v2 
+kind: Host                # Host example TLS terminated at AES Host, mTLS enabled / required
+metadata:
+  name: host-02.com       
+  namespace: ambassador
+spec:
+  hostname: "host-02.com"  
+  acmeProvider:
+    authority: https://acme-v02.api.letsencrypt.org/directory
+    email: me@example.com     
+  requestPolicy:
+    insecure:
+      action: Redirect
+      additionalPort: 8080
+  tls:
+    ca_secret: mtls-cacert
+    cert_required: true
+---
+apiVersion: getambassador.io/v2
+kind: Host
+metadata:
+  name: wildcard 
+  namespace: ambassador
+spec:
+  hostname: "*" 
+  acmeProvider:
+    authority: none
+  selector:
+    matchLabels:
+      hostname: wildcard
+  tlsSecret:
+    name: fallback-self-signed-cert
+  requestPolicy:
+    insecure:
+      action: Redirect
+      additionalPort: 8080
+---
