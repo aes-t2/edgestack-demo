@@ -1,0 +1,47 @@
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: quote-backend
+  namespace: test
+spec:
+  host: myhost.com                        # Constrain a route to a particular hos
+  prefix: /backend/
+  service: quote.test:80
+  ## Below is used for Rate Limiting
+  labels:
+    ambassador:
+    - header_request_label:
+      - headerkey: 
+          header: "x-token-name"          # Patterm matching, the key queried will be "headerkey" and the value
+---
+apiVersion: getambassador.io/v2
+kind: Mapping
+metadata:
+  name: quote-backend
+  namespace: test
+spec:
+  host: myhost.com                       # Constrain a route to a particular host
+  prefix: /backend/
+  service: http://httpbin.org            # Service is running outside K8s cluster. Utilizing Clusterverse DNS.
+  host_rewrite: httpbin.org              # If external service is virtually hosted. Specifies upstream host, rather than first requested host.
+  ## Below is used for Rate Limiting
+  labels:
+    ambassador:
+    - header_request_label:
+      - headerkey: 
+          header: "x-token-name"        # Patterm matching, the key queried will be "headerkey" and the value
+---
+apiVersion: getambassador.io/v2
+kind: RateLimit
+metadata:
+  name: token-name-rate-limit
+spec:
+  domain: ambassador
+  limits:
+  - name: token-name-per-minute
+    action: Enforce
+    pattern:
+    - headerkey: ""                   # Each unique header value of "x-token-name" is tracked individually
+    rate: 3
+    unit: "minute"
