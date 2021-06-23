@@ -1,0 +1,60 @@
+---
+# Filter: Basic OAuth
+apiVersion: getambassador.io/v2
+kind: Filter
+metadata:
+  name: keycloak-oauth-filter-quote
+  namespace: keycloak
+spec:
+  OAuth2:
+    authorizationURL: "https://my-host.com/auth/realms/ambassador"
+    audience: "ambassador"
+    clientID: "ambassador"
+    secret: "71ac43cb-fd2b-4b5d-bdb7-2fc8957f06cc"  # Edit this for proper value
+    injectRequestHeaders:
+    - name: "x-token-name"
+      value: "{{ .token.Claims.name }}"
+    protectedOrigins:
+      - origin: "https://edgestack-aes.com"
+        includeSubdomains: true
+---
+# Filter: Parse JWT access token
+apiVersion: getambassador.io/v2
+kind: Filter
+metadata:
+  name: keycloak-jwt-filter-quote
+  namespace: keycloak
+spec:
+  JWT:
+    injectRequestHeaders:
+    - name: "x-token-name"
+      value: "{{ .token.Claims.name }}"
+    issuer: https://keycloak.my-host.com/auth/realms/ambassador
+    jwksURI: https://keycloak.my-host.com/auth/realms/ambassador/protocol/openid-connect/certs
+---
+
+# This filter connects to a servie that takes the token in the Authorization head amd mades a request
+# Full installation details etc
+
+
+---
+apiVersion: getambassador.io/v2
+kind: FilterPolicy
+metadata:
+  name: authfilter-policy-quote
+  namespace: keycloak
+spec:
+  rules:
+    - host: "*" 
+      path: "/edge_stack*"
+      filters: []
+    - host: "*" 
+      path: "/backend/*"
+      filters:
+        - name: keycloak-jwt-filter-quote
+          namespace: keycloak
+          onAllow: "break" # This onAllow/onDeny behavior allows for the failthrough behavior....
+          onDeny: "continue"
+        - name: keycloak-oauth-filter-quote
+          namespace: keycloak
+---             
