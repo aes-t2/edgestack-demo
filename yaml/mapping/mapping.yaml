@@ -32,16 +32,3 @@ spec:
       - headerkey: 
           header: "x-token-name"        # Patterm matching, the key queried will be "headerkey" and the value
 ---
-apiVersion: getambassador.io/v2
-kind: RateLimit
-metadata:
-  name: token-name-rate-limit
-spec:
-  domain: ambassador
-  limits:
-  - name: token-name-per-minute
-    action: Enforce
-    pattern:
-    - headerkey: ""                   # Each unique header value of "x-token-name" is tracked individually
-    rate: 3
-    unit: "minute"
